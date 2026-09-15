@@ -4229,7 +4229,18 @@ func (c *ClickPipeResource) syncClickPipeState(ctx context.Context, state *model
 			schemaRegistryModel := models.ClickPipeKafkaSchemaRegistryModel{
 				URL:            types.StringValue(clickPipe.Source.Kafka.SchemaRegistry.URL),
 				Authentication: types.StringValue(clickPipe.Source.Kafka.SchemaRegistry.Authentication),
-				Credentials:    stateSchemaRegistryModel.Credentials,
+			}
+
+			// Round-trip the credentials so the rebuilt object matches the planned internal
+			// representation; a direct assign fails Terraform's strict sensitive comparison (#440).
+			if !stateSchemaRegistryModel.Credentials.IsNull() {
+				stateSRCredentialsModel := models.ClickPipeSourceCredentialsModel{}
+				if diags := stateSchemaRegistryModel.Credentials.As(ctx, &stateSRCredentialsModel, basetypes.ObjectAsOptions{}); diags.HasError() {
+					return fmt.Errorf("error reading ClickPipe Kafka schema registry credentials: %v", diags)
+				}
+				schemaRegistryModel.Credentials = stateSRCredentialsModel.ObjectValue()
+			} else {
+				schemaRegistryModel.Credentials = types.ObjectNull(models.ClickPipeSourceCredentialsModel{}.ObjectType().AttrTypes)
 			}
 
 			kafkaModel.SchemaRegistry = schemaRegistryModel.ObjectValue()
