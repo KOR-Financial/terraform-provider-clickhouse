@@ -391,6 +391,7 @@ func (c *ClickPipeResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 							},
 							"credentials": schema.SingleNestedAttribute{
 								MarkdownDescription: "The credentials for the Kafka source.",
+								Sensitive:           true,
 								Attributes: map[string]schema.Attribute{
 									"username": schema.StringAttribute{
 										Description: "The username for the Kafka source.",
