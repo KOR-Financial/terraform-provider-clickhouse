@@ -4259,6 +4259,11 @@ func (c *ClickPipeResource) syncClickPipeState(ctx context.Context, state *model
 
 		if clickPipe.Source.Kafka.ExactlyOnce != nil {
 			kafkaModel.ExactlyOnce = types.BoolValue(*clickPipe.Source.Kafka.ExactlyOnce)
+		} else if !stateKafkaModel.ExactlyOnce.IsNull() {
+			// The API does not echo exactlyOnce; keep the planned/state value rather than
+			// nulling it, otherwise a configured `false` fails the post-apply consistency
+			// check (mirrors ssh_key_resource_id below).
+			kafkaModel.ExactlyOnce = stateKafkaModel.ExactlyOnce
 		} else {
 			kafkaModel.ExactlyOnce = types.BoolNull()
 		}
